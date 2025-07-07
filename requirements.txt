@@ -1,9 +1,7 @@
 streamlit
 joblib
-scikit-learn
 numpy
-pandas
-git add requirements.txt
-git commit -m "Add requirements.txt for Streamlit dependencies"
-git push
+scikit-learn
+openai==0.28
+
 
