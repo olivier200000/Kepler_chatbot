@@ -122,4 +122,11 @@ elif page == "🦠 Disease Symptoms":
             prompt = f"What are the major symptoms and advice for treating {disease}?"
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
-                messages=
+                messages=[
+                    {"role": "system", "content": "You are a medical expert giving symptom lists and basic advice."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=250
+            )
+            st.success(f"🧾 Symptoms of {disease}")
+            st.write(response.choices[0].message.content)
