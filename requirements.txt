@@ -1,7 +1,6 @@
 streamlit
-joblib
-numpy
-scikit-learn
+pypdf2
+pandas
 openai==0.28
 
 
