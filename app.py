@@ -2,52 +2,69 @@ import streamlit as st
 import openai
 import pandas as pd
 import PyPDF2
-from io import StringIO
 
-# 🔐 Secure OpenAI API Key
+# Secure OpenAI API Key from Streamlit secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# 📋 Page Config
+# Page settings
 st.set_page_config(page_title="Doctor Assistant AI", layout="wide")
 
-# 🏥 Header
+# App title
 st.markdown("""
     <div style='text-align:center; padding: 10px'>
         <h1 style='color: #0078D4;'>🩺 Doctor Assistant AI</h1>
-        <p style='font-size: 18px;'>Upload lab results, explore disease symptoms, or chat with your AI medical assistant.</p>
+        <p style='font-size: 18px;'>Upload lab results, explore disease symptoms, or chat with your AI medical assistant instantly.</p>
     </div>
 """, unsafe_allow_html=True)
 
-# Sidebar: Navigation
-option = st.sidebar.radio("🧭 Navigate", ["🏥 AI Chat", "📄 Upload Lab Results", "🦠 Disease Symptoms"])
+# Sidebar navigation
+page = st.sidebar.radio("🧭 Navigation", ["🏥 AI Chat", "📄 Upload Lab Results", "🦠 Disease Symptoms"])
 
-# ------------------------ CHAT WITH AI ------------------------
-if option == "🏥 AI Chat":
+# ------------------------------------------
+# AI CHAT PAGE (ENTER KEY SUBMITS AUTOMATICALLY)
+# ------------------------------------------
+if page == "🏥 AI Chat":
     st.subheader("💬 Ask the Doctor Assistant")
-    st.markdown("Type any question related to symptoms, treatment, medication, or patient care.")
+    st.markdown("Type your question and press **Enter**. The AI will answer instantly.")
 
-    with st.container():
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            user_input = st.text_input("👨‍⚕️ Enter your question here:", key="ai_chat_input")
-        with col2:
-            ask_button = st.button("Ask")
+    # Store question and answer in session
+    if "question" not in st.session_state:
+        st.session_state.question = ""
+    if "answer" not in st.session_state:
+        st.session_state.answer = ""
 
-    if ask_button and user_input:
-        with st.spinner("Thinking..."):
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a helpful and professional medical assistant."},
-                    {"role": "user", "content": user_input}
-                ],
-                max_tokens=300
-            )
-            st.success("🤖 AI Response")
-            st.write(response.choices[0].message.content)
+    # Callback function when input changes (Enter key pressed)
+    def handle_submit():
+        query = st.session_state.question
+        if query:
+            with st.spinner("Thinking..."):
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful and professional medical assistant."},
+                        {"role": "user", "content": query}
+                    ],
+                    max_tokens=300
+                )
+                st.session_state.answer = response.choices[0].message.content
 
-# ------------------------ UPLOAD LAB RESULTS ------------------------
-elif option == "📄 Upload Lab Results":
+    # Input field that auto-submits on Enter
+    st.text_input(
+        "👨‍⚕️ Your question:",
+        key="question",
+        on_change=handle_submit,
+        placeholder="e.g. What are the symptoms of malaria?"
+    )
+
+    # Display the response
+    if st.session_state.answer:
+        st.success("🤖 AI Response")
+        st.write(st.session_state.answer)
+
+# ------------------------------------------
+# LAB RESULT INTERPRETER
+# ------------------------------------------
+elif page == "📄 Upload Lab Results":
     st.subheader("📋 Upload and Interpret Lab Report")
     uploaded_file = st.file_uploader("Upload a PDF or CSV lab report", type=["pdf", "csv"])
 
@@ -89,10 +106,12 @@ elif option == "📄 Upload Lab Results":
                     st.success("🤖 AI Analysis")
                     st.write(response.choices[0].message.content)
 
-# ------------------------ DISEASE SYMPTOMS ------------------------
-elif option == "🦠 Disease Symptoms":
+# ------------------------------------------
+# DISEASE SYMPTOMS PAGE
+# ------------------------------------------
+elif page == "🦠 Disease Symptoms":
     st.subheader("🔍 Disease Symptom Checker")
-    st.markdown("Select a disease to view its common symptoms and medical advice.")
+    st.markdown("Select a disease to view its common symptoms and basic advice.")
 
     disease = st.selectbox("Select disease", ["Malaria", "Asthma", "Typhoid", "Tuberculosis", "COVID-19"])
 
