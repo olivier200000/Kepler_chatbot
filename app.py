@@ -21,48 +21,50 @@ st.markdown("""
 page = st.sidebar.radio("🧭 Navigation", ["🏥 AI Chat", "📄 Upload Lab Results", "🦠 Disease Symptoms"])
 
 # ------------------------------------------
-# AI CHAT PAGE (ENTER KEY SUBMITS AUTOMATICALLY)
+# 🏥 AI CHAT PAGE — Chat History Style
 # ------------------------------------------
 if page == "🏥 AI Chat":
     st.subheader("💬 Ask the Doctor Assistant")
-    st.markdown("Type your question and press **Enter**. The AI will answer instantly.")
+    st.markdown("Type your medical question and press **Enter**. The AI will respond immediately. All past questions will stay visible.")
 
-    # Store question and answer in session
-    if "question" not in st.session_state:
-        st.session_state.question = ""
-    if "answer" not in st.session_state:
-        st.session_state.answer = ""
+    # Initialize chat history
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-    # Callback function when input changes (Enter key pressed)
-    def handle_submit():
-        query = st.session_state.question
-        if query:
+    # Function to handle input and get GPT response
+    def handle_chat():
+        user_input = st.session_state.user_question.strip()
+        if user_input:
             with st.spinner("Thinking..."):
                 response = openai.ChatCompletion.create(
                     model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "You are a helpful and professional medical assistant."},
-                        {"role": "user", "content": query}
+                        {"role": "user", "content": user_input}
                     ],
                     max_tokens=300
                 )
-                st.session_state.answer = response.choices[0].message.content
+                ai_reply = response.choices[0].message.content.strip()
+                st.session_state.chat_history.append((user_input, ai_reply))
+            st.session_state.user_question = ""  # Clear input after sending
 
-    # Input field that auto-submits on Enter
+    # Show previous Q&A
+    for i, (q, a) in enumerate(st.session_state.chat_history):
+        with st.container():
+            st.markdown(f"**👨‍⚕️ Question {i+1}:** {q}")
+            st.markdown(f"**🤖 Answer {i+1}:** {a}")
+            st.markdown("---")
+
+    # Input box at bottom of chat
     st.text_input(
-        "👨‍⚕️ Your question:",
-        key="question",
-        on_change=handle_submit,
-        placeholder="e.g. What are the symptoms of malaria?"
+        "Ask your next question here:",
+        key="user_question",
+        on_change=handle_chat,
+        placeholder="e.g. What are the signs of severe asthma?"
     )
 
-    # Display the response
-    if st.session_state.answer:
-        st.success("🤖 AI Response")
-        st.write(st.session_state.answer)
-
 # ------------------------------------------
-# LAB RESULT INTERPRETER
+# 📄 LAB RESULT INTERPRETER
 # ------------------------------------------
 elif page == "📄 Upload Lab Results":
     st.subheader("📋 Upload and Interpret Lab Report")
@@ -72,7 +74,7 @@ elif page == "📄 Upload Lab Results":
         if uploaded_file.name.endswith(".pdf"):
             st.info("🧾 PDF file uploaded successfully.")
             reader = PyPDF2.PdfReader(uploaded_file)
-            pdf_text = "\n".join([page.extract_text() for page in reader.pages])
+            pdf_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
             st.text_area("📃 Extracted Text", pdf_text, height=250)
 
             if st.button("🧠 Interpret with AI"):
@@ -107,7 +109,7 @@ elif page == "📄 Upload Lab Results":
                     st.write(response.choices[0].message.content)
 
 # ------------------------------------------
-# DISEASE SYMPTOMS PAGE
+# 🦠 DISEASE SYMPTOMS PAGE
 # ------------------------------------------
 elif page == "🦠 Disease Symptoms":
     st.subheader("🔍 Disease Symptom Checker")
@@ -120,11 +122,4 @@ elif page == "🦠 Disease Symptoms":
             prompt = f"What are the major symptoms and advice for treating {disease}?"
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a medical expert giving symptom lists and basic advice."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=250
-            )
-            st.success(f"🧾 Symptoms of {disease}")
-            st.write(response.choices[0].message.content)
+                messages=
