@@ -4,7 +4,7 @@ import pandas as pd
 import PyPDF2
 
 # Secure OpenAI API Key from Streamlit secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+openai.api_key = st.secrets["GEMINI_API_KEY"]
 
 # Page settings
 st.set_page_config(page_title="Doctor Assistant AI", layout="wide")
