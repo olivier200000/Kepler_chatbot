@@ -12,7 +12,7 @@ except Exception as e:
 
 # Initialize Gemini model safely
 try:
-    model = genai.GenerativeModel("gemini-pro")
+    model = genai.GenerativeModel("models/gemini-1.5-flash-latest")
     chat = model.start_chat()
 except Exception as e:
     st.error(f"Failed to initialize Gemini model. Check model name or API access. Error: {e}")
