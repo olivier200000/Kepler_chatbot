@@ -1,17 +1,18 @@
 import streamlit as st
-import openai
 import pandas as pd
 import google.generativeai as genai
 import PyPDF2
 
-# Secure OpenAI API Key from Streamlit secrets
+# Secure Gemini API Key from Streamlit secrets
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception as e:
     st.error(f"Failed to configure Gemini API. Please ensure 'GEMINI_API_KEY' is set in Streamlit secrets. Error: {e}")
     st.stop()
-model = genai.GenerativeModleModel("models/gemini-1.5-fash-latest)
-    
+
+# Initialize Gemini model
+model = genai.GenerativeModel("gemini-pro")
+chat = model.start_chat()
 
 # Page settings
 st.set_page_config(page_title="Doctor Assistant AI", layout="wide")
@@ -34,35 +35,24 @@ if page == "🏥 AI Chat":
     st.subheader("💬 Ask the Doctor Assistant")
     st.markdown("Type your medical question and press **Enter**. The AI will respond immediately. All past questions will stay visible.")
 
-    # Initialize chat history
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # Function to handle input and get GPT response
     def handle_chat():
         user_input = st.session_state.user_question.strip()
         if user_input:
             with st.spinner("Thinking..."):
-                response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "You are a helpful and professional medical assistant."},
-                        {"role": "user", "content": user_input}
-                    ],
-                    max_tokens=300
-                )
-                ai_reply = response.choices[0].message.content.strip()
+                response = chat.send_message(user_input)
+                ai_reply = response.text.strip()
                 st.session_state.chat_history.append((user_input, ai_reply))
-            st.session_state.user_question = ""  # Clear input after sending
+            st.session_state.user_question = ""
 
-    # Show previous Q&A
     for i, (q, a) in enumerate(st.session_state.chat_history):
         with st.container():
             st.markdown(f"**👨‍⚕️ Question {i+1}:** {q}")
             st.markdown(f"**🤖 Answer {i+1}:** {a}")
             st.markdown("---")
 
-    # Input box at bottom of chat
     st.text_input(
         "Ask your next question here:",
         key="user_question",
@@ -86,16 +76,10 @@ elif page == "📄 Upload Lab Results":
 
             if st.button("🧠 Interpret with AI"):
                 with st.spinner("Interpreting..."):
-                    response = openai.ChatCompletion.create(
-                        model="gpt-3.5-turbo",
-                        messages=[
-                            {"role": "system", "content": "You are a helpful AI doctor that interprets lab results."},
-                            {"role": "user", "content": f"Interpret this lab report:\n\n{pdf_text}"}
-                        ],
-                        max_tokens=300
-                    )
+                    prompt = f"You are a helpful AI doctor. Interpret this lab report:\n\n{pdf_text}"
+                    response = chat.send_message(prompt)
                     st.success("🤖 AI Interpretation")
-                    st.write(response.choices[0].message.content)
+                    st.write(response.text)
 
         elif uploaded_file.name.endswith(".csv"):
             df = pd.read_csv(uploaded_file)
@@ -104,16 +88,10 @@ elif page == "📄 Upload Lab Results":
             if st.button("🧠 Analyze CSV with AI"):
                 with st.spinner("Analyzing..."):
                     csv_text = df.to_string()
-                    response = openai.ChatCompletion.create(
-                        model="gpt-3.5-turbo",
-                        messages=[
-                            {"role": "system", "content": "You're a helpful AI doctor assistant that explains CSV lab results."},
-                            {"role": "user", "content": f"Analyze this lab data:\n\n{csv_text}"}
-                        ],
-                        max_tokens=300
-                    )
+                    prompt = f"You're a helpful AI doctor assistant. Analyze this lab data:\n\n{csv_text}"
+                    response = chat.send_message(prompt)
                     st.success("🤖 AI Analysis")
-                    st.write(response.choices[0].message.content)
+                    st.write(response.text)
 
 # ------------------------------------------
 # 🦠 DISEASE SYMPTOMS PAGE
@@ -127,13 +105,6 @@ elif page == "🦠 Disease Symptoms":
     if st.button("🔬 Get Symptoms"):
         with st.spinner("Fetching symptom data..."):
             prompt = f"What are the major symptoms and advice for treating {disease}?"
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a medical expert giving symptom lists and basic advice."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=250
-            )
+            response = chat.send_message(prompt)
             st.success(f"🧾 Symptoms of {disease}")
-            st.write(response.choices[0].message.content)
+            st.write(response.text)
