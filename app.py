@@ -1,10 +1,11 @@
 import streamlit as st
 import openai
 import pandas as pd
+import google.generativeai as genai
 import PyPDF2
 
 # Secure OpenAI API Key from Streamlit secrets
-openai.api_key = st.secrets["GEMINI_API_KEY"]
+genai.api_key = st.secrets["GEMINI_API_KEY"]
 
 # Page settings
 st.set_page_config(page_title="Doctor Assistant AI", layout="wide")
