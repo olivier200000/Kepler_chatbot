@@ -18,15 +18,55 @@ except Exception as e:
     st.error(f"Failed to initialize Gemini model. Check model name or API access. Error: {e}")
     st.stop()
 
-# Page settings
+# Page settings with green theme
 st.set_page_config(page_title="Doctor Assistant AI", layout="wide")
 
-# App title
+# Custom CSS for styling
 st.markdown("""
-    <div style='text-align:center; padding: 10px'>
-        <h1 style='color: #0078D4;'>🩺 Doctor Assistant AI</h1>
-        <p style='font-size: 18px;'>Upload lab results, explore disease symptoms, or chat with your AI medical assistant instantly.</p>
+    <style>
+        body {
+            background-color: #F7FFF7;
+        }
+        .block-container {
+            padding-top: 2rem;
+        }
+        .chat-box {
+            background-color: #E8F5E9;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .user-question {
+            color: #2E7D32;
+            font-weight: bold;
+        }
+        .ai-answer {
+            color: #1B5E20;
+        }
+        .custom-title {
+            text-align: center;
+            color: #2E7D32;
+        }
+        .header-image {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# 🖼 Add a centered image of doctor helping patient
+st.markdown("""
+    <div class="header-image">
+        <img src="https://www.pngmart.com/files/22/Doctor-Consulting-Patient-PNG-Isolated-HD.png" width="300">
     </div>
+""", unsafe_allow_html=True)
+
+# Updated app title
+st.markdown("""
+    <h1 class="custom-title">🩺 Doctor Assistant AI</h1>
+    <p style="text-align:center; font-size:18px;">
+        Upload lab results, explore disease symptoms, or chat with your AI medical assistant instantly.
+    </p>
 """, unsafe_allow_html=True)
 
 # Sidebar navigation
