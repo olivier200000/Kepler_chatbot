@@ -5,7 +5,13 @@ import google.generativeai as genai
 import PyPDF2
 
 # Secure OpenAI API Key from Streamlit secrets
-genai.api_key = st.secrets["GEMINI_API_KEY"]
+try:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+except Exception as e:
+    st.error(f"Failed to configure Gemini API. Please ensure 'GEMINI_API_KEY' is set in Streamlit secrets. Error: {e}")
+    st.stop()
+model = genai.GenerativeModleModel("models/gemini-1.5-fash-latest)
+    
 
 # Page settings
 st.set_page_config(page_title="Doctor Assistant AI", layout="wide")
