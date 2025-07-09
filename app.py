@@ -10,9 +10,13 @@ except Exception as e:
     st.error(f"Failed to configure Gemini API. Please ensure 'GEMINI_API_KEY' is set in Streamlit secrets. Error: {e}")
     st.stop()
 
-# Initialize Gemini model
-model = genai.GenerativeModel("gemini-pro")
-chat = model.start_chat()
+# Initialize Gemini model safely
+try:
+    model = genai.GenerativeModel("gemini-pro")
+    chat = model.start_chat()
+except Exception as e:
+    st.error(f"Failed to initialize Gemini model. Check model name or API access. Error: {e}")
+    st.stop()
 
 # Page settings
 st.set_page_config(page_title="Doctor Assistant AI", layout="wide")
@@ -42,9 +46,12 @@ if page == "🏥 AI Chat":
         user_input = st.session_state.user_question.strip()
         if user_input:
             with st.spinner("Thinking..."):
-                response = chat.send_message(user_input)
-                ai_reply = response.text.strip()
-                st.session_state.chat_history.append((user_input, ai_reply))
+                try:
+                    response = chat.send_message(user_input)
+                    ai_reply = response.text.strip()
+                    st.session_state.chat_history.append((user_input, ai_reply))
+                except Exception as e:
+                    st.error(f"Error communicating with Gemini: {e}")
             st.session_state.user_question = ""
 
     for i, (q, a) in enumerate(st.session_state.chat_history):
@@ -70,28 +77,42 @@ elif page == "📄 Upload Lab Results":
     if uploaded_file:
         if uploaded_file.name.endswith(".pdf"):
             st.info("🧾 PDF file uploaded successfully.")
-            reader = PyPDF2.PdfReader(uploaded_file)
-            pdf_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-            st.text_area("📃 Extracted Text", pdf_text, height=250)
+            try:
+                reader = PyPDF2.PdfReader(uploaded_file)
+                pdf_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+                st.text_area("📃 Extracted Text", pdf_text, height=250)
+            except Exception as e:
+                st.error(f"Error reading PDF: {e}")
+                pdf_text = ""
 
-            if st.button("🧠 Interpret with AI"):
+            if st.button("🧠 Interpret with AI") and pdf_text:
                 with st.spinner("Interpreting..."):
-                    prompt = f"You are a helpful AI doctor. Interpret this lab report:\n\n{pdf_text}"
-                    response = chat.send_message(prompt)
-                    st.success("🤖 AI Interpretation")
-                    st.write(response.text)
+                    try:
+                        prompt = f"You are a helpful AI doctor. Interpret this lab report:\n\n{pdf_text}"
+                        response = chat.send_message(prompt)
+                        st.success("🤖 AI Interpretation")
+                        st.write(response.text)
+                    except Exception as e:
+                        st.error(f"Error interpreting with AI: {e}")
 
         elif uploaded_file.name.endswith(".csv"):
-            df = pd.read_csv(uploaded_file)
-            st.dataframe(df)
+            try:
+                df = pd.read_csv(uploaded_file)
+                st.dataframe(df)
+            except Exception as e:
+                st.error(f"Error reading CSV: {e}")
+                df = None
 
-            if st.button("🧠 Analyze CSV with AI"):
+            if st.button("🧠 Analyze CSV with AI") and df is not None:
                 with st.spinner("Analyzing..."):
-                    csv_text = df.to_string()
-                    prompt = f"You're a helpful AI doctor assistant. Analyze this lab data:\n\n{csv_text}"
-                    response = chat.send_message(prompt)
-                    st.success("🤖 AI Analysis")
-                    st.write(response.text)
+                    try:
+                        csv_text = df.to_string()
+                        prompt = f"You're a helpful AI doctor assistant. Analyze this lab data:\n\n{csv_text}"
+                        response = chat.send_message(prompt)
+                        st.success("🤖 AI Analysis")
+                        st.write(response.text)
+                    except Exception as e:
+                        st.error(f"Error analyzing with AI: {e}")
 
 # ------------------------------------------
 # 🦠 DISEASE SYMPTOMS PAGE
@@ -104,7 +125,10 @@ elif page == "🦠 Disease Symptoms":
 
     if st.button("🔬 Get Symptoms"):
         with st.spinner("Fetching symptom data..."):
-            prompt = f"What are the major symptoms and advice for treating {disease}?"
-            response = chat.send_message(prompt)
-            st.success(f"🧾 Symptoms of {disease}")
-            st.write(response.text)
+            try:
+                prompt = f"What are the major symptoms and advice for treating {disease}?"
+                response = chat.send_message(prompt)
+                st.success(f"🧾 Symptoms of {disease}")
+                st.write(response.text)
+            except Exception as e:
+                st.error(f"Error getting symptoms from Gemini: {e}")
